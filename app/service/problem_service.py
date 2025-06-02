@@ -1,3 +1,9 @@
+"""
+Модуль сервисного слоя для работы с задачами.
+
+Этот модуль предоставляет бизнес-логику для работы с задачами в базе данных.
+"""
+
 import random
 from typing import List, Optional, Type
 
@@ -10,7 +16,19 @@ from app.models import Problem, Tag
 
 
 class ProblemService:
+    """
+    Сервис для работы с задачами.
+    
+    Attributes:
+        db (AsyncSession): Асинхронная сессия SQLAlchemy
+    """
     def __init__(self, db: AsyncSession):
+        """
+        Инициализация сервиса.
+        
+        Args:
+            db (AsyncSession): Асинхронная сессия SQLAlchemy
+        """
         self.db = db
 
     async def create(
@@ -23,7 +41,21 @@ class ProblemService:
             solved_count: int = 0,
             tags: List[str] = None
     ) -> Problem:
-
+        """
+        Создание новой задачи.
+        
+        Args:
+            contest_id (int): ID контеста
+            index (str): Индекс задачи
+            name (str): Название задачи
+            category (str): Категория задачи
+            points (Optional[float]): Количество очков
+            solved_count (int): Количество решений
+            tags (List[str]): Список тегов
+        
+        Returns:
+            Problem: Созданная задача
+        """
         db_problem = Problem(
             contest_id=contest_id,
             index=index,
@@ -48,16 +80,41 @@ class ProblemService:
         return db_problem
 
     async def get(self, contest_id: int, index: str) -> Optional[Problem]:
+        """
+        Получение задачи по ID контеста и индексу.
+        
+        Args:
+            contest_id (int): ID контеста
+            index (str): Индекс задачи
+        
+        Returns:
+            Optional[Problem]: Найденная задача или None
+        """
         result = await self.db.execute(
             select(Problem).filter_by(contest_id=contest_id, index=index)
         )
         return result.scalars().first()
 
     async def get_all(self) -> List[Type[Problem]]:
+        """
+        Получение всех задач.
+        
+        Returns:
+            List[Problem]: Список всех задач
+        """
         result = await self.db.execute(select(Problem))
         return result.scalars().all()
 
     async def get_by_tag(self, tag_name: str) -> List[Type[Problem]]:
+        """
+        Получение задач по тегу.
+        
+        Args:
+            tag_name (str): Название тега
+        
+        Returns:
+            List[Problem]: Список задач с указанным тегом
+        """
         result = await self.db.execute(
             select(Problem)
             .join(Problem.tags)
@@ -72,6 +129,18 @@ class ProblemService:
             max_points: Optional[float] = None,
             limit: int = 10
     ) -> List[Problem]:
+        """
+        Получение случайных задач по тегу и диапазону сложности.
+        
+        Args:
+            tag_name (str): Название тега
+            min_points (float): Минимальная сложность
+            max_points (Optional[float]): Максимальная сложность
+            limit (int): Максимальное количество задач
+        
+        Returns:
+            List[Problem]: Список случайных задач
+        """
         conditions = [Tag.name == tag_name, Problem.points >= min_points]
 
         if max_points is not None:

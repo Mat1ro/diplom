@@ -1,9 +1,15 @@
+"""
+Модуль определения моделей базы данных.
+
+Этот модуль содержит SQLAlchemy модели для работы с задачами Codeforces и их тегами.
+"""
+
 from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
 
-# Many-to-many таблица связи
+# Таблица связи many-to-many между задачами и тегами
 problem_tags = Table(
     'problem_tags',
     Base.metadata,
@@ -13,6 +19,19 @@ problem_tags = Table(
 
 
 class Problem(Base):
+    """
+    Модель задачи Codeforces.
+    
+    Атрибуты:
+        id (int): Уникальный идентификатор задачи
+        contest_id (int): ID контеста
+        index (str): Индекс задачи в контесте (например, 'A', 'B', 'C1')
+        name (str): Название задачи
+        category (str): Категория задачи
+        points (float): Количество очков за задачу (может быть null)
+        solved_count (int): Количество решений задачи
+        tags (list[Tag]): Список тегов, связанных с задачей
+    """
     __tablename__ = 'problems'
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -27,6 +46,14 @@ class Problem(Base):
 
 
 class Tag(Base):
+    """
+    Модель тега для задач Codeforces.
+    
+    Атрибуты:
+        id (int): Уникальный идентификатор тега
+        name (str): Название тега
+        problems (list[Problem]): Список задач, связанных с тегом
+    """
     __tablename__ = 'tags'
 
     id = Column(Integer, primary_key=True, autoincrement=True)

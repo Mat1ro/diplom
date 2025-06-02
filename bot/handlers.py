@@ -1,3 +1,13 @@
+"""
+Модуль обработчиков команд и callback-запросов Telegram бота.
+
+Этот модуль содержит обработчики для:
+1. Команды /start
+2. Пагинации списка тем
+3. Выбора темы
+4. Выбора диапазона сложности задач
+"""
+
 from aiogram import types
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
@@ -11,6 +21,19 @@ from bot.states import QuizStates
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
+    """
+    Обработчик команды /start.
+    
+    Args:
+        message (types.Message): Входящее сообщение
+        state (FSMContext): Контекст состояния FSM
+    
+    Действия:
+        1. Очищает текущее состояние
+        2. Отправляет приветственное сообщение
+        3. Показывает клавиатуру с темами
+        4. Устанавливает состояние ожидания выбора темы
+    """
     await state.clear()
     text = "👋 Выбери тему:"
     keyboard = get_topics_keyboard(page=0)
@@ -20,6 +43,15 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("page:"))
 async def process_page_callback(callback_query: types.CallbackQuery):
+    """
+    Обработчик пагинации списка тем.
+    
+    Args:
+        callback_query (types.CallbackQuery): Callback-запрос с данными пагинации
+    
+    Действия:
+        Обновляет клавиатуру с темами на указанной странице
+    """
     page = int(callback_query.data.split(":", 1)[1])
     keyboard = get_topics_keyboard(page)
     await callback_query.message.edit_reply_markup(reply_markup=keyboard)
@@ -28,6 +60,18 @@ async def process_page_callback(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("topic:"))
 async def topic_chosen(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Обработчик выбора темы.
+    
+    Args:
+        callback (types.CallbackQuery): Callback-запрос с выбранной темой
+        state (FSMContext): Контекст состояния FSM
+    
+    Действия:
+        1. Сохраняет выбранную тему
+        2. Показывает клавиатуру для выбора минимальной сложности
+        3. Устанавливает состояние ожидания выбора сложности
+    """
     topic = callback.data.split(":", 1)[1]
     await state.update_data(chosen_topic=topic)
     await callback.message.edit_text(
@@ -40,6 +84,18 @@ async def topic_chosen(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("difficulty:"))
 async def difficulty_from_chosen(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Обработчик выбора минимальной сложности.
+    
+    Args:
+        callback (types.CallbackQuery): Callback-запрос с выбранной сложностью
+        state (FSMContext): Контекст состояния FSM
+    
+    Действия:
+        1. Сохраняет минимальную сложность
+        2. Показывает клавиатуру для выбора максимальной сложности
+        3. Устанавливает состояние ожидания выбора максимальной сложности
+    """
     difficulty_str = callback.data.split(":", 1)[1]
     try:
         difficulty_from = float(difficulty_str)
@@ -47,7 +103,6 @@ async def difficulty_from_chosen(callback: types.CallbackQuery, state: FSMContex
         await callback.answer("Некорректное значение сложности", show_alert=True)
         return
 
-    # Сохраняем значение сложности "от"
     await state.update_data(difficulty_from=difficulty_from)
     await callback.message.edit_text(
         "Теперь выбери максимальную сложность (до):",
@@ -59,6 +114,19 @@ async def difficulty_from_chosen(callback: types.CallbackQuery, state: FSMContex
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("difficulty_to:"))
 async def difficulty_to_chosen(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Обработчик выбора максимальной сложности.
+    
+    Args:
+        callback (types.CallbackQuery): Callback-запрос с выбранной сложностью
+        state (FSMContext): Контекст состояния FSM
+    
+    Действия:
+        1. Получает сохраненные тему и минимальную сложность
+        2. Ищет задачи по заданным параметрам
+        3. Отправляет список найденных задач
+        4. Очищает состояние
+    """
     difficulty_to_str = callback.data.split(":", 1)[1]
     try:
         difficulty_to = float(difficulty_to_str)
