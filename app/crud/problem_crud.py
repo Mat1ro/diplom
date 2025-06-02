@@ -1,16 +1,16 @@
 from typing import List, Optional, Type
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Problem
 from app.service.problem_service import ProblemService
 
 
 class ProblemCRUD:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = ProblemService(session)
 
-    def create(
+    async def create(
             self,
             contest_id: int,
             index: str,
@@ -20,7 +20,7 @@ class ProblemCRUD:
             solved_count: int = 0,
             tags: List[str] = None
     ) -> Problem:
-        return self.session.create(
+        return await self.session.create(
             contest_id=contest_id,
             index=index,
             name=name,
@@ -30,11 +30,22 @@ class ProblemCRUD:
             tags=tags
         )
 
-    def get(self, contest_id: int, index: str) -> Optional[Problem]:
-        return self.session.get(contest_id=contest_id, index=index)
+    async def get(self, contest_id: int, index: str) -> Optional[Problem]:
+        return await self.session.get(contest_id=contest_id, index=index)
 
-    def get_all(self) -> List[Type[Problem]]:
-        return self.session.get_all()
+    async def get_all(self) -> List[Type[Problem]]:
+        return await self.session.get_all()
 
-    def get_by_tag(self, tag_name: str) -> List[Type[Problem]]:
-        return self.session.get_by_tag(tag_name)
+    async def get_by_tag(self, tag_name: str) -> List[Type[Problem]]:
+        return await self.session.get_by_tag(tag_name)
+
+    async def get_random_by_tag_and_points_range(
+            self,
+            tag_name: str,
+            min_points: float,
+            max_points: Optional[float] = None,
+            limit: int = 10
+    ) -> List[Problem]:
+        return await self.session.get_random_by_tag_and_points_range(
+            tag_name, min_points, max_points, limit
+        )

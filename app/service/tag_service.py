@@ -1,29 +1,34 @@
 from typing import Type, List, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from app.models import Tag
 
 
 class TagService:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def get_by_name(self, name: str) -> Optional[Tag]:
-        return self.session.query(Tag).filter(Tag.name == name).first()
+    async def get_by_name(self, name: str) -> Optional[Tag]:
+        result = await self.session.execute(
+            select(Tag).filter_by(name=name)
+        )
+        return result.scalars().first()
 
-    def create(self, name: str) -> Tag:
+    async def create(self, name: str) -> Tag:
         tag = Tag(name=name)
         self.session.add(tag)
-        self.session.commit()
-        self.session.refresh(tag)
+        await self.session.commit()
+        await self.session.refresh(tag)
         return tag
 
-    def get_or_create(self, name: str) -> Tag:
-        tag = self.get_by_name(name)
+    async def get_or_create(self, name: str) -> Tag:
+        tag = await self.get_by_name(name)
         if not tag:
-            tag = self.create(name)
+            tag = await self.create(name)
         return tag
 
-    def get_all(self) -> List[Type[Tag]]:
-        return self.session.query(Tag).all()
+    async def get_all(self) -> List[Type[Tag]]:
+        result = await self.session.execute(select(Tag))
+        return result.scalars().all()
