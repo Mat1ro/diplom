@@ -19,6 +19,7 @@ class TagCRUD:
     Attributes:
         service (TagService): Сервис для работы с тегами
     """
+
     def __init__(self, session: AsyncSession):
         """
         Инициализация CRUD операций.

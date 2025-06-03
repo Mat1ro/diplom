@@ -19,6 +19,7 @@ class ProblemCRUD:
     Attributes:
         session (ProblemService): Сервис для работы с задачами
     """
+
     def __init__(self, session: AsyncSession):
         """
         Инициализация CRUD операций.
